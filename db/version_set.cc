@@ -752,6 +752,7 @@ VersionSet::VersionSet(const std::string& dbname, const Options* options,
 
 VersionSet::~VersionSet() {
   current_->Unref();
+  // TODO: NewIterator 不手动 delete 则 assert 失败
   assert(dummy_versions_.next_ == &dummy_versions_);  // List must be empty
   delete descriptor_log_;
   delete descriptor_file_;
