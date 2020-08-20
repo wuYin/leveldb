@@ -31,10 +31,21 @@ Writer::Writer(WritableFile* dest, uint64_t dest_length)
 
 Writer::~Writer() = default;
 
+// NOTE:
+// record header: 7 bytes
+// record data: N bytes
+// block remain: R bytes
+// 1. [7+N, ...): KFullType
+// 2. [7, 7+N)  : KFirstType(remain 7, just empty head)
+//    N-7 >= 32 : KMiddleType in next block
+//    N-7 < 32  : KLastType in next block
+// 3. [..., 7)  : fill NULL
 Status Writer::AddRecord(const Slice& slice) {
   const char* ptr = slice.data();
   size_t left = slice.size();
 
+  // NOTE: 1. big record split to fragments
+  // NOTE: 2. empty slice still write as 0 length record, read will handle it
   // Fragment the record if necessary and emit it.  Note that if slice
   // is empty, we still want to iterate once to emit a single
   // zero-length record
@@ -48,13 +59,14 @@ Status Writer::AddRecord(const Slice& slice) {
       if (leftover > 0) {
         // Fill the trailer (literal below relies on kHeaderSize being 7)
         static_assert(kHeaderSize == 7, "");
+        // NOTE: cur block tail fill NULL
         dest_->Append(Slice("\x00\x00\x00\x00\x00\x00", leftover));
       }
       block_offset_ = 0;
     }
 
     // Invariant: we never leave < kHeaderSize bytes in a block.
-    assert(kBlockSize - block_offset_ - kHeaderSize >= 0);
+    assert(kBlockSize - block_offset_ - kHeaderSize >= 0); // NOTE: block[.....offset, header]
 
     const size_t avail = kBlockSize - block_offset_ - kHeaderSize;
     const size_t fragment_length = (left < avail) ? left : avail;

@@ -6,8 +6,11 @@
 
 namespace leveldb {
 
+//
+// NOTE: encode uin32/64 to varint string, append to dst
+//
 void PutFixed32(std::string* dst, uint32_t value) {
-  char buf[sizeof(value)];
+  char buf[sizeof(value)]; // 4B
   EncodeFixed32(buf, value);
   dst->append(buf, sizeof(buf));
 }
@@ -18,6 +21,7 @@ void PutFixed64(std::string* dst, uint64_t value) {
   dst->append(buf, sizeof(buf));
 }
 
+// NOTE: if v>=128, encode to use 7bit as 'varint_byte' to save v, or 128 so highest bit always 1
 char* EncodeVarint32(char* dst, uint32_t v) {
   // Operate on characters as unsigneds
   uint8_t* ptr = reinterpret_cast<uint8_t*>(dst);
@@ -47,7 +51,7 @@ char* EncodeVarint32(char* dst, uint32_t v) {
 }
 
 void PutVarint32(std::string* dst, uint32_t v) {
-  char buf[5];
+  char buf[5]; // NOTE: 4bytes(32bit) -> 5bytes(40bit): 5*(7varint_bytes + 1varint_bit) - 3unused_bit
   char* ptr = EncodeVarint32(buf, v);
   dst->append(buf, ptr - buf);
 }
@@ -69,6 +73,8 @@ void PutVarint64(std::string* dst, uint64_t v) {
   dst->append(buf, ptr - buf);
 }
 
+// NOTE: result dst
+// NOTE: dst <- [val_size(5 varint_bytes), val_data]
 void PutLengthPrefixedSlice(std::string* dst, const Slice& value) {
   PutVarint32(dst, value.size());
   dst->append(value.data(), value.size());
@@ -101,6 +107,10 @@ const char* GetVarint32PtrFallback(const char* p, const char* limit,
   return nullptr;
 }
 
+
+//
+// NOTE: decode varint string to uin32/64
+//
 bool GetVarint32(Slice* input, uint32_t* value) {
   const char* p = input->data();
   const char* limit = p + input->size();

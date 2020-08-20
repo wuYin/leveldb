@@ -24,6 +24,10 @@
 
 namespace leveldb {
 
+//
+// NOTE: simulate std::string without copy cost
+// NOTE: Slice -> [memory_addr, data_size](std::string)
+//
 class LEVELDB_EXPORT Slice {
  public:
   // Create an empty slice.

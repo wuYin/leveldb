@@ -1200,6 +1200,9 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* updates) {
 
   MutexLock l(&mutex_);
   writers_.push_back(&w);
+  // 1. wait until write done
+  // 2. wait w move to writers_ first elem
+  // then we should write by ourself
   while (!w.done && &w != writers_.front()) {
     w.cv.Wait();
   }
@@ -1222,6 +1225,7 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* updates) {
     // into mem_.
     {
       mutex_.Unlock();
+      // 1. append batch to WAL log
       status = log_->AddRecord(WriteBatchInternal::Contents(write_batch));
       bool sync_error = false;
       if (status.ok() && options.sync) {
@@ -1231,6 +1235,7 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* updates) {
         }
       }
       if (status.ok()) {
+        // 2. add batch to memtable
         status = WriteBatchInternal::InsertInto(write_batch, mem_);
       }
       mutex_.Lock();
@@ -1463,7 +1468,7 @@ void DBImpl::GetApproximateSizes(const Range* range, int n, uint64_t* sizes) {
 // can call if they wish
 Status DB::Put(const WriteOptions& opt, const Slice& key, const Slice& value) {
   WriteBatch batch;
-  batch.Put(key, value);
+  batch.Put(key, value); // single put, single batch
   return Write(opt, &batch);
 }
 

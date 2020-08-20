@@ -37,12 +37,13 @@ struct LEVELDB_EXPORT Range {
   Range(const Slice& s, const Slice& l) : start(s), limit(l) {}
 
   Slice start;  // Included in the range
-  Slice limit;  // Not included in the range
+  Slice limit;  // Not included in the range // [start, limit)
 };
 
 // A DB is a persistent ordered map from keys to values.
 // A DB is safe for concurrent access from multiple threads without
 // any external synchronization.
+// persistent, ordered, thread-safe
 class LEVELDB_EXPORT DB {
  public:
   // Open the database with the specified "name".
@@ -56,7 +57,7 @@ class LEVELDB_EXPORT DB {
   DB() = default;
 
   DB(const DB&) = delete;
-  DB& operator=(const DB&) = delete;
+  DB& operator=(const DB&) = delete; // prevent assignment and conversion
 
   virtual ~DB();
 
@@ -90,7 +91,7 @@ class LEVELDB_EXPORT DB {
   // Return a heap-allocated iterator over the contents of the database.
   // The result of NewIterator() is initially invalid (caller must
   // call one of the Seek methods on the iterator before using it).
-  //
+  // deletion:
   // Caller should delete the iterator when it is no longer needed.
   // The returned iterator should be deleted before this db is deleted.
   virtual Iterator* NewIterator(const ReadOptions& options) = 0;

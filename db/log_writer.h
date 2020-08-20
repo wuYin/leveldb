@@ -27,6 +27,7 @@ class Writer {
   // Create a writer that will append data to "*dest".
   // "*dest" must have initial length "dest_length".
   // "*dest" must remain live while this Writer is in use.
+  // NOTE: empty dest alive file <--w-- writer
   Writer(WritableFile* dest, uint64_t dest_length);
 
   Writer(const Writer&) = delete;
@@ -37,8 +38,10 @@ class Writer {
   Status AddRecord(const Slice& slice);
 
  private:
+  // NOTE: write to physic disk file
   Status EmitPhysicalRecord(RecordType type, const char* ptr, size_t length);
 
+  // NOTE: writer <-1:1-> WAL log
   WritableFile* dest_;
   int block_offset_;  // Current offset in block
 

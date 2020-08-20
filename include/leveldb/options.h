@@ -49,6 +49,7 @@ struct LEVELDB_EXPORT Options {
   bool create_if_missing = false;
 
   // If true, an error is raised if the database already exists.
+  // means do not use existed db
   bool error_if_exists = false;
 
   // If true, the implementation will do aggressive checking of the
@@ -79,6 +80,7 @@ struct LEVELDB_EXPORT Options {
   // so you may wish to adjust this parameter to control memory usage.
   // Also, a larger write buffer will result in a longer recovery time
   // the next time the database is opened.
+  // default max memtable size: 4MB -> immutable memtable
   size_t write_buffer_size = 4 * 1024 * 1024;
 
   // Number of open files that can be used by the DB.  You may need to
@@ -97,7 +99,7 @@ struct LEVELDB_EXPORT Options {
   // block size specified here corresponds to uncompressed data.  The
   // actual size of the unit read from disk may be smaller if
   // compression is enabled.  This parameter can be changed dynamically.
-  size_t block_size = 4 * 1024;
+  size_t block_size = 4 * 1024; // 4KB
 
   // Number of keys between restart points for delta encoding of keys.
   // This parameter can be changed dynamically.  Most clients should
@@ -112,7 +114,7 @@ struct LEVELDB_EXPORT Options {
   // compactions and hence longer latency/performance hiccups.
   // Another reason to increase this parameter might be when you are
   // initially populating a large database.
-  size_t max_file_size = 2 * 1024 * 1024;
+  size_t max_file_size = 2 * 1024 * 1024; // 2MB
 
   // Compress blocks using the specified compression algorithm.  This
   // parameter can be changed dynamically.
